@@ -48,7 +48,7 @@ func GetUser(id int) (mail, username string, createdat, updatedat time.Time, err
 
 // Update user function
 func updateUser(id int, mail, password string) (err error) {
-	query := `UPDATE mail,password, updated_at FROM users WHERE id =$1 `
+	query := `UPDATE users SET mail=$1,password=$2,updated_at=&3,id =$4`
 
 	if _, err := db.Exec(query, id, mail, password); err != nil {
 		return fmt.Errorf("User Updation failed due to %v", err)
