@@ -22,17 +22,17 @@ var err error
 
 // User CRUD
 // User creation function
-// func CreateUser(mail, username, password, salt string) (userId int, err error) {
-// 	query := `INSERT INTO users  (mail, username, password, salt) VALUES($1,$2,$3,$4) RETURNING id`
+func createUser(mail, username, password, salt string) (userId int, err error) {
+	query := `INSERT INTO users  (mail, username, password, salt) VALUES($1,$2,$3,$4) RETURNING id`
 
-// 	if err = db.QueryRow(query, mail, username, password, salt).Scan(&userId); err != nil {
-// 		fmt.Printf("User creation failed due to %v", err)
-// 	}
-// 	return userId, err
-// }
+	if err = db.QueryRow(query, mail, username, password, salt).Scan(&userId); err != nil {
+		fmt.Printf("User creation failed due to %v", err)
+	}
+	return userId, err
+}
 
 // Getting one user details function
-// func GetUser(id int) (mail, username string, createdat, updatedat time.Time, err error) {
+// func getUser(id int) (mail, username string, createdat, updatedat time.Time, err error) {
 // 	query := `SELECT mail,username,created_at,updated_at FROM users WHERE id=$1`
 
 // 	if err = db.QueryRow(query, id).Scan(&mail, &username, &createdat, &updatedat); err != nil {
@@ -44,10 +44,10 @@ var err error
 // }
 
 // Getting all users fucntion
-// func GetAllUsers() ()
+// func getAllUsers() ()
 
 // Update user function
-func UpdateUser(id int, mail, password string) (err error) {
+func updateUser(id int, mail, password string) (err error) {
 	query := `UPDATE users SET mail=$1,password=$2,updated_at=$3 WHERE id =$4`
 
 	result, err := db.Exec(query, mail, password, time.Now().UTC(), id)
@@ -67,6 +67,28 @@ func UpdateUser(id int, mail, password string) (err error) {
 	return nil
 }
 
+// Delete user
+func deleteUser(id int) (err error) {
+	query := `UPDATE users SET is_deleted = $1,deleted_at=$2 WHERE id = $3`
+
+	result, err := db.Exec(query, true, time.Now().UTC(), id)
+	if err != nil {
+		return fmt.Errorf("User deletion failed due to %v", err)
+	}
+
+	isAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("no affected rows due to : %w", err)
+	}
+	if isAffected == 0 {
+		return fmt.Errorf("no user with ID : %d", id)
+	}
+
+	log.Println("User deletion successfully completed")
+	return nil
+
+}
+
 func main() {
 	connectionString := fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode= disable", user, password, host, port, dbname)
 
@@ -82,7 +104,7 @@ func main() {
 	fmt.Println("DB connection successfully established")
 
 	//User creation
-	// userId, err := CreateUser("user2@srz.com", "adam11", "user008", "random789")
+	// userId, err := createUser("user3@srz.com", "anu1", "user123", "random696")
 	// if err != nil {
 	// 	log.Print(err)
 	// 	return
@@ -90,7 +112,7 @@ func main() {
 	// fmt.Println("User created with userId-", userId)
 
 	//Getting one user
-	// mail, username, createdat, updatedat, err := GetUser(1)
+	// mail, username, createdat, updatedat, err := getUser(1)
 	// if err != nil {
 	// 	log.Print(err)
 	// 	return
@@ -98,7 +120,12 @@ func main() {
 	// fmt.Printf("User details are \n mail-%s, username-%s, createdat-%v, updatedat-%v", mail, username, createdat, updatedat)
 
 	//Updating a user
-	if err := UpdateUser(1, "userupdated@srz.com", "newpassword"); err != nil {
+	// if err := updateUser(1, "userupdated@srz.com", "newpassword"); err != nil {
+	// 	log.Println(err)
+	// }
+
+	//Delete user
+	if err := deleteUser(3); err != nil {
 		log.Println(err)
 	}
 }
