@@ -33,6 +33,6 @@ func Initdb() (*gorm.DB, error) {
 		log.Fatal("Database ping failed", err)
 	}
 
-	fmt.Printf("Database connection successfully created")
+	fmt.Println("Database connection successfully created")
 	return db, nil
 }
