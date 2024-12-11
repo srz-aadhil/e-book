@@ -24,11 +24,11 @@ func main() {
 	user.Password = "aaaa"
 	user.Salt = "random567"
 
-	// userid, err := user.CreateUser(db)
+	userid, err := user.CreateUser(db)
 	if err != nil {
 		fmt.Println("User creation failed", err)
 	} else {
-		fmt.Println("User created with userid- ", user.ID)
+		fmt.Println("User created with userid- ", userid)
 	}
 
 	//Get a single user
