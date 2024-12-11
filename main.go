@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ebookmod/pkg/database"
+	"ebookmod/app/database"
 	"ebookmod/repo"
 	"fmt"
 	"log"
@@ -15,7 +15,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var user repo.User //instance of user
+	//var user repo.User //instance of user
 
 	//Creat a user
 	user.ID = 12
@@ -24,7 +24,7 @@ func main() {
 	user.Password = "aaaa"
 	user.Salt = "random567"
 
-	userid, err := user.CreateUser(db)
+	// userid, err := user.CreateUser(db)
 	if err != nil {
 		fmt.Println("User creation failed", err)
 	} else {
@@ -55,4 +55,17 @@ func main() {
 		fmt.Println("User updation failed due to", err)
 	}
 
+	//Author Creation
+
+	var author repo.Author
+
+	author.AuthorName = "chandran"
+	author.CreatedBy = 12
+
+	id, err := author.CreateAuthor(db)
+	if err != nil {
+		fmt.Println("Author Creation failed due- ", err)
+	} else {
+		fmt.Printf("Author created with author id- %d", id)
+	}
 }

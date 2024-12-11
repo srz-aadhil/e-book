@@ -15,3 +15,5 @@ type BaseModel struct {
 	DeletedBy *int64         `gorm:"index"`
 	IsDeleted bool           `gorm:"is_deleted"`
 }
+
+
