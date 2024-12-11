@@ -18,15 +18,17 @@ func main() {
 	var user repo.User //instance of user
 
 	//Creat a user
-	user.Username = "babu"
-	user.Mail = "babu9@yrz.com"
-	user.Password = "babus123"
-	user.Salt = "randomx1234"
-	userid, err := user.CreateUser(db)
+	user.ID = 12
+	user.Username = "django"
+	user.Mail = "aadhilzzz@yrz.com"
+	user.Password = "aaaa"
+	user.Salt = "random567"
+
+	// userid, err := user.CreateUser(db)
 	if err != nil {
 		fmt.Println("User creation failed", err)
 	} else {
-		fmt.Println("User created with userid- ", userid)
+		fmt.Println("User created with userid- ", user.ID)
 	}
 
 	//Get a single user
@@ -44,8 +46,13 @@ func main() {
 	}
 
 	//Delete a user
-	// if err = repo.DeleteUser(db, 3); err != nil {
-	// 	fmt.Println("User deletion failed due to", err)
-	// }
+	if err = repo.DeleteUser(db, 13); err != nil {
+		fmt.Println("User deletion failed due to", err)
+	}
+
+	//Update user
+	if err = repo.UpdateUser(db, 12, &user); err != nil {
+		fmt.Println("User updation failed due to", err)
+	}
 
 }
