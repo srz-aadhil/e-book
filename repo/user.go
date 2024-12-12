@@ -26,7 +26,7 @@ func (userInfo *User) CreateUser(db *gorm.DB) (Id int, err error) {
 	return userInfo.ID, nil
 }
 
-// Get user
+// Read a single user
 func GetUser(db *gorm.DB, id int) (*User, error) {
 	userdetails := &User{}
 	result := db.Unscoped().First(&userdetails, id)
@@ -47,6 +47,7 @@ func GetUser(db *gorm.DB, id int) (*User, error) {
 	return userdetails, nil
 }
 
+// Read All Users
 func GetAllUsers(db *gorm.DB) ([]*User, error) {
 	var users []*User
 	result := db.Unscoped().Where("is_deleted = ?", false).Find(&users)
@@ -60,6 +61,23 @@ func GetAllUsers(db *gorm.DB) ([]*User, error) {
 		fmt.Printf("User details with userid %d are Username: %s Mail: %s Created at: %v Updated at: %v\n", user.ID, user.Username, user.Mail, user.CreatedAt, user.UpdateAt)
 	}
 	return users, nil
+}
+
+// Update user
+func UpdateUser(db *gorm.DB, id int, user *User) error {
+	result := db.Where("id = ? AND is_deleted = ?", id, false).Updates(user)
+
+	if result.Error != nil {
+		fmt.Println("User updating failed due to- ", result.Error)
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		fmt.Printf("No user found with id %d to update.\n", id)
+		return fmt.Errorf("no user found with id %d to update", id)
+	}
+	fmt.Printf("User with userid %d updation successfully completed", id)
+	return nil
 }
 
 // Delete user
@@ -84,26 +102,5 @@ func DeleteUser(db *gorm.DB, id int) error {
 	}
 
 	fmt.Printf("User with id %d is deleted successfully\n", id)
-	return nil
-}
-
-func UpdateUser(db *gorm.DB, id int, user *User) error {
-	result := db.Where("id = ? AND is_deleted = ?", id, false).Updates(user)
-
-	if result.Error != nil {
-		fmt.Println("User updating failed due to- ", result.Error)
-		return result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		fmt.Printf("No user found with id %d to update.\n", id)
-		return fmt.Errorf("no user found with id %d to update", id)
-	}
-	if result.RowsAffected == 0 {
-		fmt.Printf("No user found with id %d to update.\n", id)
-		return fmt.Errorf("no user found with id %d to update", id)
-	}
-
-	fmt.Printf("User with userid %d updation successfully completed", id)
 	return nil
 }

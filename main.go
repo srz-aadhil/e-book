@@ -18,21 +18,21 @@ func main() {
 	//var user repo.User //instance of user
 
 	//Creat a user
-	user.ID = 12
-	user.Username = "django"
-	user.Mail = "aadhilzzz@yrz.com"
-	user.Password = "aaaa"
-	user.Salt = "random567"
+	// user.ID = 12
+	// user.Username = "django"
+	// user.Mail = "aadhilzzz@yrz.com"
+	// user.Password = "aaaa"
+	// user.Salt = "random567"
 
 	// userid, err := user.CreateUser(db)
-	if err != nil {
-		fmt.Println("User creation failed", err)
-	} else {
-		fmt.Println("User created with userid- ", userid)
-	}
+	// if err != nil {
+	// 	fmt.Println("User creation failed", err)
+	// } else {
+	// 	fmt.Println("User created with userid- ", userid)
+	// }
 
 	//Get a single user
-	oneuser, err := repo.GetUser(db, 7)
+	oneuser, err := repo.GetUser(db, 13)
 	if err != nil {
 		fmt.Println("User fetching failed due to-", err)
 	} else {
@@ -56,10 +56,8 @@ func main() {
 	}
 
 	//Author Creation
-
 	var author repo.Author
-
-	author.AuthorName = "chandran"
+	author.AuthorName = "Akhilan"
 	author.CreatedBy = 12
 
 	id, err := author.CreateAuthor(db)
@@ -68,4 +66,21 @@ func main() {
 	} else {
 		fmt.Printf("Author created with author id- %d", id)
 	}
+
+	//Reading Single Author
+	author, err := repo.GetAuthor(db, 9)
+	if err != nil {
+		fmt.Println("Author fetching failed due to- ", err)
+	} else {
+		fmt.Printf("Author details with author id '%d' are AuthorName:- %s Createdby:- '%d' CreatedAt:- %v  ", author.ID, author.AuthorName, author.CreatedBy, author.CreatedAt)
+	}
+
+	//Reading All Authors
+	authors, err := repo.GetAllAuthors(db)
+	if err != nil {
+		fmt.Println("Authors fetching failed ", err)
+	} else {
+		fmt.Println(authors)
+	}
+
 }
