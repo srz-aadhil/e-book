@@ -17,19 +17,19 @@ func main() {
 
 	//var user repo.User //instance of user
 
-	//Creat a user
-	// user.ID = 12
-	// user.Username = "django"
-	// user.Mail = "aadhilzzz@yrz.com"
-	// user.Password = "aaaa"
-	// user.Salt = "random567"
+	Creat a user
+	user.ID = 12
+	user.Username = "django"
+	user.Mail = "aadhilzzz@yrz.com"
+	user.Password = "aaaa"
+	user.Salt = "random567"
 
 	// userid, err := user.CreateUser(db)
-	// if err != nil {
-	// 	fmt.Println("User creation failed", err)
-	// } else {
-	// 	fmt.Println("User created with userid- ", userid)
-	// }
+	if err != nil {
+		fmt.Println("User creation failed", err)
+	} else {
+		fmt.Println("User created with userid- ", userid)
+	}
 
 	//Get a single user
 	oneuser, err := repo.GetUser(db, 13)
@@ -57,8 +57,9 @@ func main() {
 
 	//Author Creation
 	var author repo.Author
-	author.AuthorName = "Akhilan"
-	author.CreatedBy = 12
+	author.ID = 8
+	author.AuthorName = "Django"
+	author.CreatedBy = 13
 
 	id, err := author.CreateAuthor(db)
 	if err != nil {
@@ -81,6 +82,16 @@ func main() {
 		fmt.Println("Authors fetching failed ", err)
 	} else {
 		fmt.Println(authors)
+	}
+
+	//Update an Author
+	if err = repo.UpdateAuthor(db,&author); err!= nil {
+		fmt.Println("Author updation failed -", err)
+	}
+
+	//Delete an Author
+	if err = repo.DeleteAuthor(db, 8); err != nil {
+		fmt.Println("Author deletion failed due to- ", err)
 	}
 
 }

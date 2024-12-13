@@ -65,5 +65,39 @@ func GetAllAuthors(db *gorm.DB) ([]*Author, error) {
 	return allAuthors, nil
 }
 
-//Update Author
-//Delete Author
+// Update Author
+func UpdateAuthor(db *gorm.DB, author *Author) error {
+	result := db.Table("authors").Where("id = ? AND status = ?", author.ID, true).Updates(author)
+
+	if result.Error != nil {
+		return fmt.Errorf("Author Updation failed due to- %v", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("No author with id '%d' exist to update ", author.ID)
+	}
+
+	fmt.Println("Author updation successfully completed")
+	return nil
+}
+
+// Delete Author
+func DeleteAuthor(db *gorm.DB, id int) error {
+	result := db.Table("authors").Where("id = ? AND status = ?", id, true).Delete(&Author{})
+
+	if result.Error != nil {
+		return fmt.Errorf("Author Deletion failed due to %v", result.Error)
+	}
+
+	updateRecord := db.Table("authors").Where("id = ? AND status = ?", id, true).Update("status", false)
+
+	if updateRecord.Error != nil {
+		return fmt.Errorf("Author status updation failed due to %v", updateRecord.Error)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("No Author found with id '%d' to delete", id)
+	}
+
+	fmt.Printf("Author with id '%d' deletion successfully completed", id)
+	return nil
+}

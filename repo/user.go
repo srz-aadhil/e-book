@@ -73,7 +73,7 @@ func UpdateUser(db *gorm.DB, id int, user *User) error {
 	}
 
 	if result.RowsAffected == 0 {
-		fmt.Printf("No user found with id %d to update.\n", id)
+		// fmt.Printf("No user found with id %d to update.\n", id)
 		return fmt.Errorf("no user found with id %d to update", id)
 	}
 	fmt.Printf("User with userid %d updation successfully completed", id)
