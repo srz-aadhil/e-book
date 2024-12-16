@@ -15,16 +15,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	//var user repo.User //instance of user
+	var user repo.User //instance of user
 
-	Creat a user
+	// Create user
 	user.ID = 12
 	user.Username = "django"
 	user.Mail = "aadhilzzz@yrz.com"
 	user.Password = "aaaa"
 	user.Salt = "random567"
 
-	// userid, err := user.CreateUser(db)
+	userid, err := user.CreateUser(db)
 	if err != nil {
 		fmt.Println("User creation failed", err)
 	} else {
@@ -56,12 +56,12 @@ func main() {
 	}
 
 	//Author Creation
-	var author repo.Author
-	author.ID = 8
-	author.AuthorName = "Django"
-	author.CreatedBy = 13
+	var newauthor repo.Author
+	newauthor.ID = 8
+	newauthor.AuthorName = "Django"
+	newauthor.CreatedBy = 13
 
-	id, err := author.CreateAuthor(db)
+	id, err := newauthor.CreateAuthor(db)
 	if err != nil {
 		fmt.Println("Author Creation failed due- ", err)
 	} else {
@@ -85,13 +85,57 @@ func main() {
 	}
 
 	//Update an Author
-	if err = repo.UpdateAuthor(db,&author); err!= nil {
+	if err = repo.UpdateAuthor(db,&newauthor); err!= nil {
 		fmt.Println("Author updation failed -", err)
 	}
 
 	//Delete an Author
 	if err = repo.DeleteAuthor(db, 8); err != nil {
 		fmt.Println("Author deletion failed due to- ", err)
+	}
+
+	//Create a book
+	var newbook repo.Book // Instance of book
+
+	newbook.Title = "fresh book"
+	newbook.Content = "rare piece version"
+	newbook.AuthorID = 5
+	newbook.CreatedBy = 9
+	newbook.Status = 2 // '1'- Published, '2'- Draft, '3'- Deleted
+
+	 bookid, err := newbook.CreateBook(db)
+	if err != nil {
+		fmt.Println("Book creation failed due to ", err)
+	} else {
+		fmt.Printf("Book created with id '%v'", bookid)
+	}
+
+	//Get a Book
+	book, err := repo.GetaBook(db, 15)
+	if err != nil {
+		fmt.Printf("Book fetching failed due to- %s", err)
+	} else {
+		fmt.Printf("Book with id '%d' details are\nTitle:- %s\nContent:- %s\nAuthor:- %d\nCreatedby:- %d\nCreated at:- %v\n", book.ID, book.Title, book.Content, book.AuthorID, book.CreatedBy, book.CreatedAt)
+	}
+
+	//Get All books
+	allbooks, err := repo.GetAllBooks(db)
+	if err != nil {
+		fmt.Println("All Books fetching failed due to ", err)
+	} else {
+		for _, book := range allbooks {
+			fmt.Printf("Book with id '%d' details are\nTitle:- %s\nContent:- %s\nAuthor:- %d\nCreatedby:- %d\nCreated at:- %v\n\n", book.ID, book.Title, book.Content, book.AuthorID, book.CreatedBy, book.CreatedAt)
+		}
+	}
+
+	//Update a book
+	if err := repo.UpdateABook(db, &newbook); err != nil {
+		fmt.Println("Book updation failed\n", err)
+	}
+
+	//Delete a book
+	if err := repo.DeleteaABook(db, 6); err != nil {
+		fmt.Println("Book deletion failed due to ", err)
 	}
 
 }
