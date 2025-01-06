@@ -10,13 +10,13 @@ import (
 	"gorm.io/gorm"
 )
 
-// const (
-// 	user     = "postgres"
-// 	password = "password"
-// 	host     = "localhost"
-// 	port     = 5432
-// 	dbname   = "ebookdb"
-// )
+const (
+	user     = "postgres"
+	password = "password"
+	host     = "localhost"
+	port     = 5432
+	dbname   = "ebookdb"
+)
 
 func Initdb() (*gorm.DB, *sql.DB, error) {
 	user := os.Getenv("DB_USER")

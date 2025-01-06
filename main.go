@@ -1,19 +1,24 @@
 package main
 
 import (
-	"ebookmod/cmd"
+	"ebookmod/app/database"
+	_ "ebookmod/cmd"
+	"ebookmod/repo"
 	_ "ebookmod/repo"
+	_"ebookmod/service"
+	"fmt"
+	"log"
 
 	_ "github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	cmd.Execute()
-	// db, err := database.Initdb()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	// cmd.Execute()
+	db, _, err := database.Initdb()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	//var user repo.User //instance of user
 
@@ -56,17 +61,16 @@ func main() {
 	// }
 
 	//Author Creation
-	// var newauthor repo.Author
-	// newauthor.ID = 8
-	// newauthor.AuthorName = "Django"
-	// newauthor.CreatedBy = 13
+	var newauthor repo.Author
+	newauthor.AuthorName = "new boy"
+	newauthor.CreatedBy = 12
 
-	// id, err := newauthor.CreateAuthor(db)
-	// if err != nil {
-	// 	fmt.Println("Author Creation failed due- ", err)
-	// } else {
-	// 	fmt.Printf("Author created with author id- %d", id)
-	// }
+	id, err := newauthor.CreateAuthor(db)
+	if err != nil {
+		fmt.Println("Author Creation failed due- ", err)
+	} else {
+		fmt.Printf("Author created with author id- %d", id)
+	}
 
 	//Reading Single Author
 	// author, err := repo.GetAuthor(db, 9)
@@ -138,4 +142,28 @@ func main() {
 	// 	fmt.Println("Book deletion failed due to ", err)
 	// }
 
+	//Calling the GetAuthor function in service layer
+
+	//Initialising AuthorService Instance
+	//authorService := service.NewAuthorService(db)
+
+	// author, err := authorService.GetAuthorService(6)
+	// if err != nil {
+	// 	fmt.Println("Author fetching failed due to -", err)
+	// }
+
+	// fmt.Printf("Author details are\nID:- %d\nAuthor name:- %s\nCreated by :- %d\nCreated at :- %v\nStatus :-%v\n", author.ID, author.AuthorName, author.CreatedBy, author.CreatedAt, author.Status)
+
+	// CreateAuthor(service layer)
+	//var newauthor repo.Author
+	// 	newauthor.AuthorName = "u boy"
+	// 	newauthor.CreatedBy = 13
+
+	// 	id, err := authorService.CreateAuthorService(&newauthor)
+	// 	if err != nil {
+	// 		fmt.Println("Author creation failed due to", err)
+	// 	} else {
+	// 		fmt.Printf("Author created with id %d", id)
+	// 	}
+	// }
 }
