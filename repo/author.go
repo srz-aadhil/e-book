@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"ebookmod/app/dto"
 	"fmt"
 	"log"
 	"time"
@@ -8,6 +9,13 @@ import (
 	"gorm.io/gorm"
 )
 
+type AuthorRepo interface {
+	CreateAuthor(db *gorm.DB) (lastInsertedID int, err error)
+	GetAuthor(db *gorm.DB, id int) (*Author, error)
+	GetAllAuthors(db *gorm.DB) ([]*Author, error)
+	UpdateAuthor(db *gorm.DB, author *Author) error
+	DeleteAuthor(db *gorm.DB, id int) error
+}
 type Author struct {
 	ID         int            `gorm:"primary-key"`
 	AuthorName string         `gorm:"column:name"`
@@ -20,14 +28,26 @@ type Author struct {
 	Status     bool           `gorm:"status"`
 }
 
+type AuthorRepoImpl struct {
+	db *gorm.DB
+}
+
+var _ AuthorRepo = (*AuthorRepoImpl)(nil)
+
+func NewAuthorRepo(db *gorm.DB) *AuthorRepo {
+	return &AuthorRepoImpl{
+		db: db,
+	}
+}
+
 // Create an Author
-func (authorInfo *Author) CreateAuthor(db *gorm.DB) (id int, err error) {
-	result := db.Table("authors").Create(&authorInfo)
+func (r *AuthorRepoImpl) CreateAuthor(authorReq *dto.AuthorCreateRequest) (lastInsertedID int, err error) {
+	result := r.db.Table("authors").Create(authorReq)
 	if result.Error != nil {
 		return 0, fmt.Errorf("Author creation failed due to- %v ", result.Error)
 	}
 
-	return authorInfo.ID, nil
+	return lastInsertedID, nil
 }
 
 // Read a single user
