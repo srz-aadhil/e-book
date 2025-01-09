@@ -1,11 +1,20 @@
 package repo
 
 import (
+	"ebookmod/app/dto"
 	"fmt"
 	"time"
 
 	"gorm.io/gorm"
 )
+
+type BookRepo interface {
+	CreateBook(bookReq *dto.BookCreateRequest) (lastInsertedID int, err error)
+	GetBook(id int) (bookResp *dto.BookResponse, err error)
+	GetAllBooks()(bookResp []*dto.BookResponse,err error)
+	UpdateBook(updateBook *dto.BookUpdateRequest) (err error)
+	DeleteBook(id int)(err error)
+}
 
 type Book struct {
 	ID        int            `gorm:"primarykey"`

@@ -10,11 +10,11 @@ import (
 )
 
 type AuthorRepo interface {
-	CreateAuthor(db *gorm.DB) (lastInsertedID int, err error)
-	GetAuthor(db *gorm.DB, id int) (*Author, error)
-	GetAllAuthors(db *gorm.DB) ([]*Author, error)
-	UpdateAuthor(db *gorm.DB, author *Author) error
-	DeleteAuthor(db *gorm.DB, id int) error
+	CreateAuthor(authorReq *dto.AuthorCreateRequest) (lastInsertedID int, err error)
+	GetAuthor(id int) (authorResp *dto.AuthorResponse, err error)
+	GetAllAuthors() (authorResp []*dto.AuthorResponse, err error)
+	UpdateAuthor(updateReq *dto.AuthorUpdateRequest) error
+	DeleteAuthor(id int) error
 }
 type Author struct {
 	ID         int            `gorm:"primary-key"`
@@ -34,7 +34,7 @@ type AuthorRepoImpl struct {
 
 var _ AuthorRepo = (*AuthorRepoImpl)(nil)
 
-func NewAuthorRepo(db *gorm.DB) *AuthorRepo {
+func NewAuthorRepo(db *gorm.DB) AuthorRepo {
 	return &AuthorRepoImpl{
 		db: db,
 	}
@@ -42,7 +42,7 @@ func NewAuthorRepo(db *gorm.DB) *AuthorRepo {
 
 // Create an Author
 func (r *AuthorRepoImpl) CreateAuthor(authorReq *dto.AuthorCreateRequest) (lastInsertedID int, err error) {
-	result := r.db.Table("authors").Create(authorReq)
+	result := r.db.Table("authors").Create(&authorReq)
 	if result.Error != nil {
 		return 0, fmt.Errorf("Author creation failed due to- %v ", result.Error)
 	}
@@ -51,9 +51,8 @@ func (r *AuthorRepoImpl) CreateAuthor(authorReq *dto.AuthorCreateRequest) (lastI
 }
 
 // Read a single user
-func GetAuthor(db *gorm.DB, id int) (*Author, error) {
-	authordetails := &Author{}
-	result := db.Unscoped().First(&authordetails, id)
+func (r *AuthorRepoImpl) GetAuthor(id int) (authorResp *dto.AuthorResponse, err error) {
+	result := r.db.Unscoped().First(&authorResp, id)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
@@ -64,37 +63,36 @@ func GetAuthor(db *gorm.DB, id int) (*Author, error) {
 		}
 	}
 
-	if authordetails.Status == false {
+	if authorResp.Status == false {
 		return nil, fmt.Errorf("User already deleted")
 	}
-	return authordetails, nil
+	return authorResp, nil
 }
 
 // Read All Authors
-func GetAllAuthors(db *gorm.DB) ([]*Author, error) {
-	allAuthors := []*Author{}
-	result := db.Table("authors").Where("status = ?", true).Find(&allAuthors)
+func (r *AuthorRepoImpl) GetAllAuthors() (authorResp []*dto.AuthorResponse, err error) {
+	result := r.db.Table("authors").Where("status = ?", true).Find(&authorResp)
 
 	if result.Error != nil {
 		return nil, fmt.Errorf("Authors fetching failed due to- %v ", result.Error)
 	}
 
-	for _, author := range allAuthors {
-		fmt.Printf("Author details with authorid '%d'- AuthorName:- %s Createdby:- '%d' CreatedAt:- %v \n", author.ID, author.AuthorName, author.CreatedBy, author.CreatedAt)
-	}
-	return allAuthors, nil
+	// for _, author := range authorResp {
+	// 	fmt.Printf("Author details with authorid '%d'- AuthorName:- %s Createdby:- '%d' CreatedAt:- %v \n", author.ID, author.AuthorName, author.CreatedBy, author.CreatedAt)
+	// }
+	return authorResp, nil
 }
 
 // Update Author
-func UpdateAuthor(db *gorm.DB, author *Author) error {
-	result := db.Table("authors").Where("id = ? AND status = ?", author.ID, true).Updates(author)
+func (r *AuthorRepoImpl) UpdateAuthor(updateReq *dto.AuthorUpdateRequest) error {
+	result := r.db.Table("authors").Where("id = ? AND status = ?", updateReq.ID, true).Updates(updateReq)
 
 	if result.Error != nil {
 		return fmt.Errorf("Author Updation failed due to- %v", result.Error)
 	}
 
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("No author with id '%d' exist to update ", author.ID)
+		return fmt.Errorf("No author with id '%d' exist to update ", updateReq.ID)
 	}
 
 	fmt.Println("Author updation successfully completed")
@@ -102,14 +100,17 @@ func UpdateAuthor(db *gorm.DB, author *Author) error {
 }
 
 // Delete Author
-func DeleteAuthor(db *gorm.DB, id int) error {
-	result := db.Table("authors").Where("id = ? AND status = ?", id, true).Delete(&Author{})
+func (r *AuthorRepoImpl) DeleteAuthor(id int) error {
+	result := r.db.Table("authors").Where("id = ? AND status = ?", id, true).Updates(map[string]interface{}{
+		"status":     false,
+		"deleted_at": time.Now().UTC(),
+	})
 
 	if result.Error != nil {
 		return fmt.Errorf("Author Deletion failed due to %v", result.Error)
 	}
 
-	updateRecord := db.Table("authors").Where("id = ? AND status = ?", id, true).Update("status", false)
+	updateRecord := r.db.Table("authors").Where("id = ? AND status = ?", id, true).Update("status", false)
 
 	if updateRecord.Error != nil {
 		return fmt.Errorf("Author status updation failed due to %v", updateRecord.Error)

@@ -3,27 +3,25 @@ package service
 import (
 	"ebookmod/repo"
 	"fmt"
-
-	"gorm.io/gorm"
 )
 
 type AuthorService struct {
-	db *gorm.DB
+	authorRepo repo.AuthorRepo
 }
 
 // NewAuthorService creates a new instance of AuthorService
-func NewAuthorService(db *gorm.DB) *AuthorService {
+func NewAuthorService(authorRepo repo.AuthorRepo) *AuthorService {
 	return &AuthorService{
-		db: db,
+		authorRepo: authorRepo,
 	}
 }
 
-func (service *AuthorService) CreateAuthorService(author *repo.Author) (id int, err error) {
+func (service *AuthorService) CreateAuthorService() (id int, err error) {
 	if author.AuthorName == "" {
 		return 0, fmt.Errorf("Author name cannot be empty")
 	}
 
-	id, err = author.CreateAuthor(service.db)
+	id, err = author.Crea
 	if err != nil {
 		return 0, fmt.Errorf("Author creation failed due to - %v", err)
 	}
