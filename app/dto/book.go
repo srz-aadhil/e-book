@@ -22,7 +22,7 @@ type BookResponse struct {
 	UpdatedAt time.Time      `json:"updated_at" gorm:"column:updated_at;autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 	DeletedBy *int           `json:"deleted_by,omitempty" gorm:"index"`
-	Status    int           `json:"status" gorm:"column:status;default:1"`
+	Status    int            `json:"status" gorm:"column:status;default:1"`
 }
 
 // for path param
@@ -78,6 +78,7 @@ func (b *BookDeleteRequest) Validate() error {
 
 // for body param
 type BookCreateRequest struct {
+	ID        int    `gorm:"primary key" json:"id"`
 	Title     string `json:"title"`
 	Content   string `json:"content"`
 	AuthorID  int    `json:"author_id" validate:"required"` //Author.ID

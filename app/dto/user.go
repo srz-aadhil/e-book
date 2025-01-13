@@ -15,7 +15,6 @@ type UserResponse struct {
 	Password  string `json:"password"`
 	Salt      string `json:"salt"`
 	IsDeleted bool   `json:"is_deleted"`
-	
 }
 
 type UserRequest struct {
@@ -45,6 +44,7 @@ func (u *UserRequest) Validate() error {
 
 // for body param
 type UserCreateRequest struct {
+	ID       int    `gorm:"primaryKey" json:"id"`
 	UserName string `json:"username" validate:"required"`
 	Password string `json:"password"`
 }

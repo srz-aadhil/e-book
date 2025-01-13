@@ -11,9 +11,9 @@ import (
 type BookRepo interface {
 	CreateBook(bookReq *dto.BookCreateRequest) (lastInsertedID int, err error)
 	GetBook(id int) (bookResp *dto.BookResponse, err error)
-	GetAllBooks()(bookResp []*dto.BookResponse,err error)
+	GetAllBooks() (bookResp []*dto.BookResponse, err error)
 	UpdateBook(updateBook *dto.BookUpdateRequest) (err error)
-	DeleteBook(id int)(err error)
+	DeleteBook(id int) error
 }
 
 type Book struct {
@@ -30,57 +30,65 @@ type Book struct {
 	Status    int            `gorm:"status"`
 }
 
+type BookRepoImpl struct {
+	db *gorm.DB
+}
+
+func NewRepoImpl(db *gorm.DB) BookRepo {
+	return &BookRepoImpl{
+		db: db,
+	}
+}
+
 // Create a book
-func (bookinfo *Book) CreateBook(db *gorm.DB) (id int, err error) {
-	result := db.Table("books").Create(&bookinfo)
+func (r *BookRepoImpl) CreateBook(bookReq *dto.BookCreateRequest) (lastInstertedID int, err error) {
+	result := r.db.Table("books").Create(bookReq)
 
 	if result.Error != nil {
 		return 0, fmt.Errorf("Book creation failed due to- %v", result.Error)
 	}
 
 	fmt.Println("Book Successfully uploaded")
-	return bookinfo.ID, nil
+	return bookReq.ID, nil
 }
 
 // Read a book
-func GetaBook(db *gorm.DB, id int) (singlebook *Book, err error) {
-	var book *Book
+func (r *BookRepoImpl) GetBook(id int) (bookResp *dto.BookResponse, err error) {
 	//getting a book from db
-	result := db.Where("id = ?", id).First(&book)
+	result := r.db.Where("id = ?", id).First(bookResp)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("Book with id '%d' not found", id)
 		}
-		return nil, fmt.Errorf("failed to fetch boo due to %s ", result.Error)
+		return nil, fmt.Errorf("failed to fetch book due to %s ", result.Error)
 	}
 
-	if book.Status == 3 {
+	if bookResp.Status == 3 {
 		return nil, fmt.Errorf("\nBook with id '%d' is deleted", id)
 	} else {
 		// 	fmt.Printf("Book with id '%d' details are\n Title:- %s\nContent:- %s\n Author:- %d\n Createdby:- %d\n Created at:- %v\n", book.ID, book.Title, book.Content, book.AuthorID, book.CreatedBy, book.CreatedAt)
 		// }
 
-		return book, nil
+		return bookResp, nil
 	}
 }
 
 // Read All Books
-func GetAllBooks(db *gorm.DB) ([]*Book, error) {
-	allbooks := []*Book{}
-	result := db.Unscoped().Where("status = ? OR status = ?", 1, 2).Find(&allbooks)
+func (r *BookRepoImpl) GetAllBooks() (bookResp []*dto.BookResponse, err error) {
+	result := r.db.Unscoped().Where("status = ? OR status = ?", 1, 2).Find(bookResp)
 
 	if result.Error != nil {
 		return nil, fmt.Errorf("Books fetching failed due to %v", result.Error)
 	}
 
-	return allbooks, nil
+	return bookResp, nil
 
 }
 
 // Update a book
-func UpdateABook(db *gorm.DB, book *Book) error {
-	result := db.Where("status = ? or status = ?", 1, 2).Updates(book)
+func (r *BookRepoImpl) UpdateBook(updateBook *dto.BookUpdateRequest) error {
+	result := r.db.Where("status = ? or status = ?", 1, 2).Updates(updateBook)
 
 	if result.Error != nil {
 		return fmt.Errorf("Book updation failed due to- %v", result.Error)
@@ -95,23 +103,26 @@ func UpdateABook(db *gorm.DB, book *Book) error {
 }
 
 // Delete a book
-func DeleteaABook(db *gorm.DB, id int) error {
+func (r *BookRepoImpl) DeleteBook(id int) error {
 	//Query execution
-	result := db.Table("books").Where("id = ? AND status = ? OR status = ?", id, 1, 2).Delete(&Book{})
+	result := r.db.Table("books").Where("id = ? AND status = ? OR status = ?", id, 1, 2).Updates(map[string]interface{}{
+		"status":     false,
+		"deleted_at": time.Now().UTC(),
+	})
 
 	if result.Error != nil {
 		return fmt.Errorf("Book deletion failed due to %v", result.Error)
 	}
 
-	updatedRecord := db.Table("books").Where("id = ? AND status = ? OR status = ?", id, 1, 2).Update("status", 3)
+	// updatedRecord := db.Table("books").Where("id = ? AND status = ? OR status = ?", id, 1, 2).Update("status", 3)
 
-	if updatedRecord.Error != nil {
-		return fmt.Errorf("Updating deletion status of book failed due to %v", updatedRecord.Error)
-	}
-
-	// if result.RowsAffected == 0 {
-	// 	return fmt.Errorf("No book found with id '%d' to delete", id)
+	// if updatedRecord.Error != nil {
+	// 	return fmt.Errorf("Updating deletion status of book failed due to %v", updatedRecord.Error)
 	// }
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("No book found with id '%d' to delete", id)
+	}
 
 	fmt.Println("Book deletion successfully completed")
 	return nil

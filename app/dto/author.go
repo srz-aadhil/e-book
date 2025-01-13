@@ -50,6 +50,7 @@ func (a *AuthorRequest) Validate() error {
 
 // For Body param
 type AuthorCreateRequest struct {
+	ID        int    `gorm:"primaryKey" json:"id"`
 	Name      string `json:"name"`
 	CreatedBy int    `json:"created_by"`
 }

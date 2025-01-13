@@ -47,7 +47,7 @@ func (r *AuthorRepoImpl) CreateAuthor(authorReq *dto.AuthorCreateRequest) (lastI
 		return 0, fmt.Errorf("Author creation failed due to- %v ", result.Error)
 	}
 
-	return lastInsertedID, nil
+	return authorReq.ID, nil
 }
 
 // Read a single user
@@ -110,11 +110,11 @@ func (r *AuthorRepoImpl) DeleteAuthor(id int) error {
 		return fmt.Errorf("Author Deletion failed due to %v", result.Error)
 	}
 
-	updateRecord := r.db.Table("authors").Where("id = ? AND status = ?", id, true).Update("status", false)
+	// updateRecord := r.db.Table("authors").Where("id = ? AND status = ?", id, true).Update("status", false)
 
-	if updateRecord.Error != nil {
-		return fmt.Errorf("Author status updation failed due to %v", updateRecord.Error)
-	}
+	// if updateRecord.Error != nil {
+	// 	return fmt.Errorf("Author status updation failed due to %v", updateRecord.Error)
+	// }
 	if result.RowsAffected == 0 {
 		return fmt.Errorf("No Author found with id '%d' to delete", id)
 	}

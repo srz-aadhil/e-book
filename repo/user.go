@@ -1,10 +1,20 @@
 package repo
 
 import (
+	"ebookmod/app/dto"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 )
+
+type UserRepo interface {
+	CreateUser(createReq *dto.UserCreateRequest) (lastInsertedID int, err error)
+	GetUser(id int) (userResponse *dto.UserResponse, err error)
+	GetAllUsers() (userResp []*dto.UserResponse, err error)
+	UpdateUser(updateReq *dto.UserUpdateRequest) error
+	DeleteUser(id int) error
+}
 
 type User struct {
 	ID       int    `gorm:"primarykey"`
@@ -15,21 +25,30 @@ type User struct {
 	BaseModel
 }
 
+type UserRepoImpl struct {
+	db *gorm.DB
+}
+
+func NewRepoService(db *gorm.DB) UserRepo {
+	return &UserRepoImpl{
+		db: db,
+	}
+}
+
 // Create User
-func (userInfo *User) CreateUser(db *gorm.DB) (Id int, err error) {
-	result := db.Create(&userInfo)
+func (r *UserRepoImpl) CreateUser(userReq *dto.UserCreateRequest) (lastInsertedID int, err error) {
+	result := r.db.Create(&userReq)
 
 	if result.Error != nil {
 		return 0, result.Error
 	}
 
-	return userInfo.ID, nil
+	return userReq.ID, nil
 }
 
 // Read a single user
-func GetUser(db *gorm.DB, id int) (*User, error) {
-	userdetails := &User{}
-	result := db.Unscoped().First(&userdetails, id)
+func (r *UserRepoImpl) GetUser(id int) (userResp *dto.UserResponse, err error) {
+	result := r.db.Unscoped().First(&userResp, id)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
@@ -39,33 +58,35 @@ func GetUser(db *gorm.DB, id int) (*User, error) {
 			return nil, result.Error
 		}
 	}
-	if userdetails.IsDeleted {
+	if userResp.IsDeleted {
 		return nil, fmt.Errorf("User not found because the user record is deleted")
 	} else {
 		fmt.Println("User retrieved successfully")
 	}
-	return userdetails, nil
+	return userResp, nil
 }
 
 // Read All Users
-func GetAllUsers(db *gorm.DB) ([]*User, error) {
-	var users []*User
-	result := db.Unscoped().Where("is_deleted = ?", false).Find(&users)
+func (r *UserRepoImpl) GetAllUsers() (userResp []*dto.UserResponse, err error) {
+	result := r.db.Unscoped().Where("is_deleted = ?", false).Find(&userResp)
 
 	if result.Error != nil {
 		fmt.Println("Users fetching failed due to-", result.Error)
 		return nil, result.Error
 	}
 
-	for _, user := range users {
-		fmt.Printf("User details with userid %d are Username: %s Mail: %s Created at: %v Updated at: %v\n", user.ID, user.Username, user.Mail, user.CreatedAt, user.UpdateAt)
-	}
-	return users, nil
+	// for _, user := range users {
+	// 	fmt.Printf("User details with userid %d are Username: %s Mail: %s Created at: %v Updated at: %v\n", user.ID, user.Username, user.Mail, user.CreatedAt, user.UpdateAt)
+	// }
+	return userResp, nil
 }
 
 // Update user
-func UpdateUser(db *gorm.DB, id int, user *User) error {
-	result := db.Where("id = ? AND is_deleted = ?", id, false).Updates(user)
+func (r *UserRepoImpl) UpdateUser(updateReq *dto.UserUpdateRequest) error {
+	result := r.db.Where("id = ? AND is_deleted = ?", updateReq.ID, false).Updates(map[string]interface{}{
+		"name":     updateReq.UserName,
+		"password": updateReq.Password,
+	})
 
 	if result.Error != nil {
 		fmt.Println("User updating failed due to- ", result.Error)
@@ -74,27 +95,30 @@ func UpdateUser(db *gorm.DB, id int, user *User) error {
 
 	if result.RowsAffected == 0 {
 		// fmt.Printf("No user found with id %d to update.\n", id)
-		return fmt.Errorf("no user found with id %d to update", id)
+		return fmt.Errorf("no user found with id %d to update", updateReq.ID)
 	}
-	fmt.Printf("User with userid %d updation successfully completed", id)
+	fmt.Printf("User with userid %d updation successfully completed", updateReq.ID)
 	return nil
 }
 
 // Delete user
-func DeleteUser(db *gorm.DB, id int) error {
-	result := db.Table("users").Where("id = ?", id).Delete(&User{})
+func (r *UserRepoImpl) DeleteUser(id int) error {
+	result := r.db.Table("users").Where("id = ? AND status = ?", id, true).Updates(map[string]interface{}{
+		"status":     false,
+		"deleted_at": time.Now().UTC(),
+	})
 	if result.Error != nil {
 		fmt.Println("User deletion failed due to- ", result.Error)
 		return result.Error
 	}
 	// Update the is_deleted field to true for the specified user
-	updaterecord := db.Table("users").Where("id = ? AND is_deleted = ?", id, false).Update("is_deleted", true)
+	//updaterecord := db.Table("users").Where("id = ? AND is_deleted = ?", id, false).Update("is_deleted", true)
 
 	// Check for errors during the update operation
-	if updaterecord.Error != nil {
-		fmt.Println("User deletion failed due to:", updaterecord.Error)
-		return updaterecord.Error
-	}
+	// if updaterecord.Error != nil {
+	// 	fmt.Println("User deletion failed due to:", updaterecord.Error)
+	// 	return updaterecord.Error
+	// }
 
 	if result.RowsAffected == 0 {
 		fmt.Printf("No user found with id %d to delete.\n", id)
