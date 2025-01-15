@@ -1,79 +1,122 @@
 package service
 
 import (
+	"ebookmod/app/dto"
+	"ebookmod/pkg/e"
 	"ebookmod/repo"
-	"fmt"
+	"net/http"
 )
 
-type AuthorService struct {
+type AuthorService interface {
+	CreateAuthor(r *http.Request) (lastInsertedID int, err error)
+	GetAuthor(r *http.Request) (authorResp *dto.AuthorResponse, err error)
+	GetAllAuthors(r *http.Request) (authorsResp []*dto.AuthorResponse, err error)
+	UpdateAuthor(updateReq *http.Request) error
+	DeleteAuthor(r *http.Request) error
+}
+
+type authorServiceImpl struct {
 	authorRepo repo.AuthorRepo
 }
 
 // NewAuthorService creates a new instance of AuthorService
-func NewAuthorService(authorRepo repo.AuthorRepo) *AuthorService {
-	return &AuthorService{
+func NewAuthorService(authorRepo repo.AuthorRepo) AuthorService {
+	return &authorServiceImpl{
 		authorRepo: authorRepo,
 	}
 }
 
-func (service *AuthorService) CreateAuthorService() (id int, err error) {
-	if author.AuthorName == "" {
-		return 0, fmt.Errorf("Author name cannot be empty")
+func (s *authorServiceImpl) CreateAuthor(r *http.Request) (lastInsertedID int, err error) {
+	body := &dto.AuthorCreateRequest{}
+	if err := body.Parse(r); err != nil {
+		return 0, e.NewError(e.ErrDecodeRequestBody, "Author request parse error", err)
 	}
 
-	id, err = author.Crea
+	if err := body.Validate(); err != nil {
+		return 0, e.NewError(e.ErrValidateRequest, "Validation error during author creation", err)
+	}
+
+	authorID, err := s.authorRepo.CreateAuthor(body)
 	if err != nil {
-		return 0, fmt.Errorf("Author creation failed due to - %v", err)
+		return 0, e.NewError(e.ErrInvalidRequest, "Author creation error", err)
 	}
 
-	return id, nil
+	return authorID, nil
 }
 
-func (service *AuthorService) GetAuthorService(id int) (author *repo.Author, err error) {
-	if id <= 0 {
-		return nil, fmt.Errorf("Invalid Author ID input")
+func (s *authorServiceImpl) GetAuthor(r *http.Request) (authorResp *dto.AuthorResponse, err error) {
+	body := &dto.AuthorRequest{}
+	if err := body.Parse(r); err != nil {
+		return nil, e.NewError(e.ErrInvalidRequest, "Author request parse error", err)
 	}
 
-	author, err = repo.GetAuthor(service.db, id)
+	if err := body.Validate(); err != nil {
+
+		return nil, e.NewError(e.ErrValidateRequest, "Validation error", err)
+	}
+
+	author, err := s.authorRepo.GetAuthor(body.ID)
 	if err != nil {
-		return nil, fmt.Errorf("Author fetching failed due to %v", err)
+		return nil, e.NewError(e.ErrInvalidRequest, "No author found with mentioned id", err)
 	}
 
 	return author, nil
 }
 
-func (service *AuthorService) GetAllAuthorsService() (authors []*repo.Author, err error) {
-	authors, err = repo.GetAllAuthors(service.db)
+func (s *authorServiceImpl) GetAllAuthors(r *http.Request) (authorsResp []*dto.AuthorResponse, err error) {
+	result, err := s.authorRepo.GetAllAuthors()
 	if err != nil {
-		return nil, fmt.Errorf("All Autthors list fetching failed due to %v ", err)
+		return nil, e.NewError(e.ErrInvalidRequest, "Authors parsing error", err)
 	}
-	return authors, nil
+	var authorsList []*dto.AuthorResponse
+	for _, value := range result {
+
+		var author dto.AuthorResponse
+		author.ID = value.ID
+		author.Name = value.Name
+		author.Status = value.Status
+		author.CreatedBy = value.CreatedBy
+		author.CreatedAt = value.CreatedAt
+		author.UpdatedBy = value.UpdatedBy
+		author.UpdatedAt = value.UpdatedAt
+		author.DeletedAt = value.DeletedAt
+		author.DeletedBy = value.DeletedBy
+		author.IsDeleted = value.IsDeleted
+
+		authorsList = append(authorsList, &author)
+	}
+	return authorsList, nil
 }
 
-func (service *AuthorService) UpdateAuthorService(author *repo.Author) error {
-	if author.ID <= 0 {
-
-		return fmt.Errorf("Invalid author ID")
-	}
-	if author.AuthorName == "" {
-		return fmt.Errorf("author name cannot be empty")
+func (s *authorServiceImpl) UpdateAuthor(r *http.Request) error {
+	body := &dto.AuthorUpdateRequest{}
+	if err := body.Parse(r); err != nil {
+		return e.NewError(e.ErrDecodeRequestBody, "Author update decode error", err)
 	}
 
-	if err := repo.UpdateAuthor(service.db, author); err != nil {
-		return fmt.Errorf("Author updating failed due to %v", err)
+	if err := body.Validate(); err != nil {
+		return e.NewError(e.ErrValidateRequest, "author update validation error", err)
+	}
+
+	if err := s.authorRepo.UpdateAuthor(body); err != nil {
+		return e.NewError(e.ErrInternalServer, "Author updation error", err)
 	}
 
 	return nil
-
 }
 
-func (service *AuthorService) DeleteAuthorService(id int) error {
-	if id <= 0 {
-		return fmt.Errorf("Invalid author ID ")
+func (s *authorServiceImpl) DeleteAuthor(r *http.Request) error {
+	body := &dto.AuthorRequest{}
+	if err := body.Parse(r); err != nil {
+		return e.NewError(e.ErrInvalidRequest, "Author delete parse error", err)
 	}
 
-	if err := repo.DeleteAuthor(service.db, id); err != nil {
-		return fmt.Errorf("Author deletion failed due to %v", err)
+	if err := body.Validate(); err != nil {
+		return e.NewError(e.ErrValidateRequest, "Author deletion validation error", err)
+	}
+
+	if err := s.authorRepo.DeleteAuthor(body.ID); err != nil {
+		return e.NewError(e.ErrInvalidRequest, "Author deletion failed", err)
 	}
 
 	return nil

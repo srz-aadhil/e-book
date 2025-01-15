@@ -61,6 +61,14 @@ func (a *AuthorCreateRequest) Parse(r *http.Request) error {
 	}
 	return nil
 }
+func (a *AuthorCreateRequest) Validate() error {
+	validate := validator.New()
+	if err := validate.Struct(a); err != nil {
+		return err
+	}
+	return nil
+
+}
 
 type AuthorUpdateRequest struct {
 	ID        int    `json:"id"`
