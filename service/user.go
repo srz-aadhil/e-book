@@ -60,3 +60,57 @@ func (s *userServiceImpl) GetUser(r *http.Request) (userResp *dto.UserResponse, 
 
 	return userResp, nil
 }
+
+func (s *userServiceImpl) GetAllUsers(r *http.Request) (userResp []*dto.UserResponse, err error) {
+	result, err := s.userRepo.GetAllUsers()
+	if err != nil {
+		return nil, e.NewError(e.ErrGetAllRequest, "All users fetching parse error", err)
+	}
+
+	var usersList []*dto.UserResponse
+
+	for _, val := range result {
+		var user dto.UserResponse
+
+		user.ID = val.ID
+		user.UserName = val.UserName
+		user.IsDeleted = val.IsDeleted
+
+		usersList = append(usersList, &user)
+	}
+
+	return usersList, nil
+}
+
+func (s *userServiceImpl) UpdateUser(r *http.Request) error {
+	body := &dto.UserUpdateRequest{}
+	if err := body.Parse(r); err != nil {
+		return e.NewError(e.ErrDecodeRequestBody, "User updation parse error", err)
+	}
+
+	if err := body.Validate(); err != nil {
+		return e.NewError(e.ErrValidateRequest, "User updation validate error", err)
+	}
+
+	if err := s.userRepo.UpdateUser(body); err != nil {
+		return e.NewError(e.ErrInternalServer, "User updation failed", err)
+	}
+	return nil
+}
+
+func (s *userServiceImpl) DeleteUser(r *http.Request) error {
+	body := &dto.UserRequest{}
+	if err := body.Parse(r); err != nil {
+		return e.NewError(e.ErrDecodeRequestBody, "User deletion parse error", err)
+	}
+
+	if err := body.Validate(); err != nil {
+		return e.NewError(e.ErrValidateRequest, "User deletion validate error", err)
+	}
+
+	if err := s.userRepo.DeleteUser(body.ID); err != nil {
+		return e.NewError(e.ErrResourceNotFound, "No user found with mentioned id", err)
+	}
+
+	return nil
+}

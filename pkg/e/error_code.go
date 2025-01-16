@@ -10,6 +10,9 @@ const (
 
 	//ErrDecodeRequest : error when decoding the request body
 	ErrDecodeRequestBody
+
+	//ErrGetAllRequest : error when calling getall function
+	ErrGetAllRequest
 )
 
 //404 Errors

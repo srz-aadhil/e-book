@@ -66,7 +66,7 @@ func (s *authorServiceImpl) GetAuthor(r *http.Request) (authorResp *dto.AuthorRe
 func (s *authorServiceImpl) GetAllAuthors(r *http.Request) (authorsResp []*dto.AuthorResponse, err error) {
 	result, err := s.authorRepo.GetAllAuthors()
 	if err != nil {
-		return nil, e.NewError(e.ErrInvalidRequest, "Authors parsing error", err)
+		return nil, e.NewError(e.ErrGetAllRequest, "All Authors parsing error", err)
 	}
 	var authorsList []*dto.AuthorResponse
 	for _, value := range result {
