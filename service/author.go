@@ -10,8 +10,8 @@ import (
 type AuthorService interface {
 	CreateAuthor(r *http.Request) (lastInsertedID int, err error)
 	GetAuthor(r *http.Request) (authorResp *dto.AuthorResponse, err error)
-	GetAllAuthors(r *http.Request) (authorsResp []*dto.AuthorResponse, err error)
-	UpdateAuthor(updateReq *http.Request) error
+	GetAllAuthors() (authorsResp []*dto.AuthorResponse, err error)
+	UpdateAuthor(r *http.Request) error
 	DeleteAuthor(r *http.Request) error
 }
 
@@ -63,7 +63,7 @@ func (s *authorServiceImpl) GetAuthor(r *http.Request) (authorResp *dto.AuthorRe
 	return author, nil
 }
 
-func (s *authorServiceImpl) GetAllAuthors(r *http.Request) (authorsResp []*dto.AuthorResponse, err error) {
+func (s *authorServiceImpl) GetAllAuthors() (authorsResp []*dto.AuthorResponse, err error) {
 	result, err := s.authorRepo.GetAllAuthors()
 	if err != nil {
 		return nil, e.NewError(e.ErrGetAllRequest, "All Authors parsing error", err)

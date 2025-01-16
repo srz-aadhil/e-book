@@ -49,7 +49,7 @@ func (c *authorControllerImpl) GetAuthor(w http.ResponseWriter, r *http.Request)
 }
 
 func (c *authorControllerImpl) GetAllAuthors(w http.ResponseWriter, r *http.Request) {
-	allAuthors, err := c.authorService.GetAllAuthors(r)
+	allAuthors, err := c.authorService.GetAllAuthors()
 	if err != nil {
 		httpErr := e.NewAPIError(err, "Fetching all authors failed")
 		api.Fail(w, httpErr.Statuscode, httpErr.Code, httpErr.Message, err.Error())
