@@ -30,6 +30,7 @@ func (c *userControllerImpl) CreateUser(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		httpErr := e.NewAPIError(err, "User creation failed")
 		api.Fail(w, httpErr.Statuscode, httpErr.Code, httpErr.Message, err.Error())
+		return
 	}
 
 	api.Success(w, http.StatusOK, userID)
@@ -40,6 +41,7 @@ func (c *userControllerImpl) GetUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httpErr := e.NewAPIError(err, "User fetching failed")
 		api.Fail(w, httpErr.Statuscode, httpErr.Code, httpErr.Message, err.Error())
+		return
 	}
 
 	api.Success(w, http.StatusOK, user)
@@ -50,9 +52,28 @@ func (c *userControllerImpl) GetAllUsers(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		httpErr := e.NewAPIError(err, "Fetching all users failed")
 		api.Fail(w, httpErr.Statuscode, httpErr.Code, httpErr.Message, err.Error())
+		return
 	}
 
 	api.Success(w, http.StatusOK, allUsers)
 }
 
+func (c *userControllerImpl) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	if err := c.userService.UpdateUser(r); err != nil {
+		httpErr := e.NewAPIError(err, "User updating failed")
+		api.Fail(w, httpErr.Statuscode, httpErr.Code, httpErr.Message, err.Error())
+		return
+	}
 
+	api.Success(w, http.StatusOK, "User Updation successfull")
+}
+
+func (c *userControllerImpl) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	if err := c.userService.DeleteUser(r); err != nil {
+		httpErr := e.NewAPIError(err, "No user found with mentioned id")
+		api.Fail(w, httpErr.Statuscode, httpErr.Code, httpErr.Message, err.Error())
+		return
+	}
+
+	api.Success(w, http.StatusOK, "User deletion successfull")
+}
