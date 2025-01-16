@@ -10,7 +10,7 @@ import (
 type UserService interface {
 	CreateUser(r *http.Request) (lastInsertedID int, err error)
 	GetUser(r *http.Request) (userResp *dto.UserResponse, err error)
-	GetAllUsers() (allUsers []*dto.UserResponse, err error)
+	GetAllUsers(r *http.Request) (allUsers []*dto.UserResponse, err error)
 	UpdateUser(r *http.Request) error
 	DeleteUser(r *http.Request) error
 }
@@ -19,9 +19,9 @@ type userServiceImpl struct {
 	userRepo repo.UserRepo
 }
 
-func NewUserController(userRepo repo.User) UserService {
+func NewUserController(userRepo repo.UserRepo) UserService {
 	return &userServiceImpl{
-		userRepo: &userRepo,
+		userRepo: userRepo,
 	}
 }
 
@@ -61,7 +61,7 @@ func (s *userServiceImpl) GetUser(r *http.Request) (userResp *dto.UserResponse, 
 	return userResp, nil
 }
 
-func (s *userServiceImpl) GetAllUsers(r *http.Request) (userResp []*dto.UserResponse, err error) {
+func (s *userServiceImpl) GetAllUsers(r *http.Request) (allUsers []*dto.UserResponse, err error) {
 	result, err := s.userRepo.GetAllUsers()
 	if err != nil {
 		return nil, e.NewError(e.ErrGetAllRequest, "All users fetching parse error", err)
