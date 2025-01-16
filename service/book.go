@@ -19,7 +19,7 @@ type bookServiceImpl struct {
 	bookRepo repo.BookRepo
 }
 
-func NewBookController(bookRepo repo.BookRepo) BookService {
+func NewBookService(bookRepo repo.BookRepo) BookService {
 	return &bookServiceImpl{
 		bookRepo: bookRepo,
 	}
