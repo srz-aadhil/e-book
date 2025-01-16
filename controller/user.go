@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"ebookmod/pkg/api"
+	"ebookmod/pkg/e"
 	"ebookmod/service"
 	"net/http"
 )
@@ -22,3 +24,35 @@ func NewBookController(userService service.UserService) UserController {
 		userService: userService,
 	}
 }
+
+func (c *userControllerImpl) CreateUser(w http.ResponseWriter, r *http.Request) {
+	userID, err := c.userService.CreateUser(r)
+	if err != nil {
+		httpErr := e.NewAPIError(err, "User creation failed")
+		api.Fail(w, httpErr.Statuscode, httpErr.Code, httpErr.Message, err.Error())
+	}
+
+	api.Success(w, http.StatusOK, userID)
+}
+
+func (c *userControllerImpl) GetUser(w http.ResponseWriter, r *http.Request) {
+	user, err := c.userService.GetUser(r)
+	if err != nil {
+		httpErr := e.NewAPIError(err, "User fetching failed")
+		api.Fail(w, httpErr.Statuscode, httpErr.Code, httpErr.Message, err.Error())
+	}
+
+	api.Success(w, http.StatusOK, user)
+}
+
+func (c *userControllerImpl) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	allUsers, err := c.userService.GetAllUsers(r)
+	if err != nil {
+		httpErr := e.NewAPIError(err, "Fetching all users failed")
+		api.Fail(w, httpErr.Statuscode, httpErr.Code, httpErr.Message, err.Error())
+	}
+
+	api.Success(w, http.StatusOK, allUsers)
+}
+
+
