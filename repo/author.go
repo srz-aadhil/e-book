@@ -11,7 +11,7 @@ import (
 
 type AuthorRepo interface {
 	CreateAuthor(authorReq *dto.AuthorCreateRequest) (lastInsertedID int, err error)
-	GetAuthor(id int) (authorResp *dto.AuthorResponse, err error)
+	GetAuthor(id int) (authorResp *Author, err error)
 	GetAllAuthors() (authorResp []*dto.AuthorResponse, err error)
 	UpdateAuthor(updateReq *dto.AuthorUpdateRequest) error
 	DeleteAuthor(id int) error
@@ -20,7 +20,7 @@ type Author struct {
 	ID         int            `gorm:"primary-key"`
 	AuthorName string         `gorm:"column:name"`
 	CreatedBy  int            `gorm:"column:created_by"`
-	UpdatedBy  *int           `gorm:"column:updated_by"`
+	UpdatedBy  int            `gorm:"column:updated_by"`
 	CreatedAt  time.Time      `gorm:"created_at"`
 	UpdateAt   time.Time      `gorm:"column:updated_at"`
 	DeletedAt  gorm.DeletedAt `gorm:"index"`
@@ -32,8 +32,6 @@ type AuthorRepoImpl struct {
 	db *gorm.DB
 }
 
-var _ AuthorRepo = (*AuthorRepoImpl)(nil)
-
 func NewAuthorRepo(db *gorm.DB) AuthorRepo {
 	return &AuthorRepoImpl{
 		db: db,
@@ -42,30 +40,36 @@ func NewAuthorRepo(db *gorm.DB) AuthorRepo {
 
 // Create an Author
 func (r *AuthorRepoImpl) CreateAuthor(authorReq *dto.AuthorCreateRequest) (lastInsertedID int, err error) {
-	result := r.db.Table("authors").Create(&authorReq)
+	author := &Author{
+		ID:         authorReq.ID,
+		AuthorName: authorReq.Name,
+		CreatedBy:  authorReq.CreatedBy,
+		Status:     true,
+	}
+	result := r.db.Table("authors").Create(author)
 	if result.Error != nil {
 		return 0, fmt.Errorf("Author creation failed due to- %v ", result.Error)
 	}
 
-	return authorReq.ID, nil
+	return author.ID, nil
 }
 
 // Read a single user
-func (r *AuthorRepoImpl) GetAuthor(id int) (authorResp *dto.AuthorResponse, err error) {
-	result := r.db.Unscoped().First(&authorResp, id)
+func (r *AuthorRepoImpl) GetAuthor(id int) (authorResp *Author, err error) {
+	result := r.db.Unscoped().First(authorResp, id)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			log.Println("NO user found") // Print message for non-existent user
-			return nil, fmt.Errorf("User not found")
+			log.Println("NO author found") // Print message for non-existent user
+			return nil, fmt.Errorf("Author not found")
 		} else {
-			return nil, fmt.Errorf("User fetching failed due to -%v", result.Error)
+			return nil, fmt.Errorf("Author fetching failed due to -%v", result.Error)
 		}
 	}
 
-	if authorResp.Status == false {
-		return nil, fmt.Errorf("User already deleted")
-	}
+	// if authorResp.Status == false {
+	// 	return nil, fmt.Errorf("Author already deleted")
+	// }
 	return authorResp, nil
 }
 

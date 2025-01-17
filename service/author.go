@@ -44,7 +44,7 @@ func (s *authorServiceImpl) CreateAuthor(r *http.Request) (lastInsertedID int, e
 	return authorID, nil
 }
 
-func (s *authorServiceImpl) GetAuthor(r *http.Request) (authorResp *dto.AuthorResponse, err error) {
+func (s *authorServiceImpl) GetAuthor(r *http.Request) (*dto.AuthorResponse, error) {
 	body := &dto.AuthorRequest{}
 	if err := body.Parse(r); err != nil {
 		return nil, e.NewError(e.ErrInvalidRequest, "Author request parse error", err)
@@ -59,8 +59,17 @@ func (s *authorServiceImpl) GetAuthor(r *http.Request) (authorResp *dto.AuthorRe
 	if err != nil {
 		return nil, e.NewError(e.ErrInvalidRequest, "No author found with mentioned id", err)
 	}
+	var authorResp dto.AuthorResponse
+	authorResp.ID = author.ID
+	authorResp.Name = author.AuthorName
+	authorResp.CreatedBy = author.CreatedBy
+	authorResp.CreatedAt = author.CreatedAt
+	authorResp.UpdatedBy = author.UpdatedBy
+	authorResp.UpdatedAt = author.UpdateAt
+	authorResp.DeletedBy = author.DeletedBy
+	authorResp.DeletedAt = author.DeletedAt
 
-	return author, nil
+	return &authorResp, nil
 }
 
 func (s *authorServiceImpl) GetAllAuthors() (authorsResp []*dto.AuthorResponse, err error) {

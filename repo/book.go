@@ -34,7 +34,7 @@ type BookRepoImpl struct {
 	db *gorm.DB
 }
 
-func NewRepoImpl(db *gorm.DB) BookRepo {
+func NewBookRepo(db *gorm.DB) BookRepo {
 	return &BookRepoImpl{
 		db: db,
 	}

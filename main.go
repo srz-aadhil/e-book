@@ -1,24 +1,21 @@
 package main
 
 import (
-	"ebookmod/app/database"
+	"ebookmod/cmd"
 	_ "ebookmod/cmd"
-	"ebookmod/repo"
 	_ "ebookmod/repo"
-	_"ebookmod/service"
-	"fmt"
-	"log"
+	_ "ebookmod/service"
 
 	_ "github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	// cmd.Execute()
-	db, _, err := database.Initdb()
-	if err != nil {
-		log.Fatal(err)
-	}
+	cmd.Execute()
+	// db, _, err := database.Initdb()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	//var user repo.User //instance of user
 
@@ -61,16 +58,16 @@ func main() {
 	// }
 
 	//Author Creation
-	var newauthor repo.Author
-	newauthor.AuthorName = "new boy"
-	newauthor.CreatedBy = 12
+	// var newauthor repo.Author
+	// newauthor.AuthorName = "new boy"
+	// newauthor.CreatedBy = 12
 
-	id, err := newauthor.CreateAuthor(db)
-	if err != nil {
-		fmt.Println("Author Creation failed due- ", err)
-	} else {
-		fmt.Printf("Author created with author id- %d", id)
-	}
+	// id, err := newauthor.CreateAuthor(db)
+	// if err != nil {
+	// 	fmt.Println("Author Creation failed due- ", err)
+	// } else {
+	// 	fmt.Printf("Author created with author id- %d", id)
+	// }
 
 	//Reading Single Author
 	// author, err := repo.GetAuthor(db, 9)
