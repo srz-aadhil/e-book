@@ -12,20 +12,20 @@ import (
 type AuthorRepo interface {
 	CreateAuthor(authorReq *dto.AuthorCreateRequest) (lastInsertedID int, err error)
 	GetAuthor(id int) (authorResp *Author, err error)
-	GetAllAuthors() (authorResp []*dto.AuthorResponse, err error)
+	GetAllAuthors() (authorResp []*Author, err error)
 	UpdateAuthor(updateReq *dto.AuthorUpdateRequest) error
-	DeleteAuthor(id int) error
+	DeleteAuthor(deleteReq *dto.AuthorDeleteRequest) error
 }
 type Author struct {
-	ID         int            `gorm:"primary-key"`
-	AuthorName string         `gorm:"column:name"`
-	CreatedBy  int            `gorm:"column:created_by"`
-	UpdatedBy  int            `gorm:"column:updated_by"`
-	CreatedAt  time.Time      `gorm:"created_at"`
-	UpdateAt   time.Time      `gorm:"column:updated_at"`
-	DeletedAt  gorm.DeletedAt `gorm:"index"`
-	DeletedBy  *int64         `gorm:"index"`
-	Status     bool           `gorm:"status"`
+	ID        int            `gorm:"primary-key"`
+	Name      string         `gorm:"column:name"`
+	CreatedBy int            `gorm:"column:created_by"`
+	UpdatedBy *int           `gorm:"column:updated_by"`
+	CreatedAt time.Time      `gorm:"created_at"`
+	UpdateAt  time.Time      `gorm:"column:updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+	DeletedBy *int           `gorm:"index"`
+	Status    bool           `gorm:"status"`
 }
 
 type AuthorRepoImpl struct {
@@ -41,10 +41,9 @@ func NewAuthorRepo(db *gorm.DB) AuthorRepo {
 // Create an Author
 func (r *AuthorRepoImpl) CreateAuthor(authorReq *dto.AuthorCreateRequest) (lastInsertedID int, err error) {
 	author := &Author{
-		ID:         authorReq.ID,
-		AuthorName: authorReq.Name,
-		CreatedBy:  authorReq.CreatedBy,
-		Status:     true,
+		Name:      authorReq.Name,
+		CreatedBy: authorReq.CreatedBy,
+		Status:    true,
 	}
 	result := r.db.Table("authors").Create(author)
 	if result.Error != nil {
@@ -56,7 +55,7 @@ func (r *AuthorRepoImpl) CreateAuthor(authorReq *dto.AuthorCreateRequest) (lastI
 
 // Read a single user
 func (r *AuthorRepoImpl) GetAuthor(id int) (authorResp *Author, err error) {
-	result := r.db.Unscoped().First(authorResp, id)
+	result := r.db.Unscoped().First(&authorResp, id)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
@@ -67,14 +66,14 @@ func (r *AuthorRepoImpl) GetAuthor(id int) (authorResp *Author, err error) {
 		}
 	}
 
-	// if authorResp.Status == false {
-	// 	return nil, fmt.Errorf("Author already deleted")
-	// }
+	if authorResp.DeletedBy != nil {
+		return nil, fmt.Errorf("Author already deleted")
+	}
 	return authorResp, nil
 }
 
 // Read All Authors
-func (r *AuthorRepoImpl) GetAllAuthors() (authorResp []*dto.AuthorResponse, err error) {
+func (r *AuthorRepoImpl) GetAllAuthors() (authorResp []*Author, err error) {
 	result := r.db.Table("authors").Where("status = ?", true).Find(&authorResp)
 
 	if result.Error != nil {
@@ -89,7 +88,11 @@ func (r *AuthorRepoImpl) GetAllAuthors() (authorResp []*dto.AuthorResponse, err 
 
 // Update Author
 func (r *AuthorRepoImpl) UpdateAuthor(updateReq *dto.AuthorUpdateRequest) error {
-	result := r.db.Table("authors").Where("id = ? AND status = ?", updateReq.ID, true).Updates(updateReq)
+	result := r.db.Table("authors").Where("id = ? AND status = ?", updateReq.ID, true).Updates(map[string]interface{}{
+		"name":       updateReq.Name,
+		"updated_by": updateReq.UpdatedBy,
+		"updated_at": time.Now().UTC(),
+	})
 
 	if result.Error != nil {
 		return fmt.Errorf("Author Updation failed due to- %v", result.Error)
@@ -104,9 +107,11 @@ func (r *AuthorRepoImpl) UpdateAuthor(updateReq *dto.AuthorUpdateRequest) error 
 }
 
 // Delete Author
-func (r *AuthorRepoImpl) DeleteAuthor(id int) error {
-	result := r.db.Table("authors").Where("id = ? AND status = ?", id, true).Updates(map[string]interface{}{
+func (r *AuthorRepoImpl) DeleteAuthor(deleteReq *dto.AuthorDeleteRequest) error {
+
+	result := r.db.Table("authors").Where("id = ? AND status = ?", deleteReq.ID, true).Updates(map[string]interface{}{
 		"status":     false,
+		"deleted_by": deleteReq.DeletedBy,
 		"deleted_at": time.Now().UTC(),
 	})
 
@@ -120,9 +125,9 @@ func (r *AuthorRepoImpl) DeleteAuthor(id int) error {
 	// 	return fmt.Errorf("Author status updation failed due to %v", updateRecord.Error)
 	// }
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("No Author found with id '%d' to delete", id)
+		return fmt.Errorf("No Author found with id '%d' to delete", deleteReq.ID)
 	}
 
-	fmt.Printf("Author with id '%d' deletion successfully completed", id)
+	fmt.Printf("Author with id '%d' deletion successfully completed", deleteReq.ID)
 	return nil
 }

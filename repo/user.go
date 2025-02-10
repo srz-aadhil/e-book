@@ -3,17 +3,18 @@ package repo
 import (
 	"ebookmod/app/dto"
 	"fmt"
+	"log"
 	"time"
 
 	"gorm.io/gorm"
 )
 
 type UserRepo interface {
-	CreateUser(createReq *dto.UserCreateRequest) (lastInsertedID int, err error)
-	GetUser(id int) (userResponse *dto.UserResponse, err error)
-	GetAllUsers() (userResp []*dto.UserResponse, err error)
+	CreateUser(userReq *dto.UserCreateRequest) (lastInsertedID int, err error)
+	GetUser(id int) (userResp *User, err error)
+	GetAllUsers() (userResp []*User, err error)
 	UpdateUser(updateReq *dto.UserUpdateRequest) error
-	DeleteUser(id int) error
+	DeleteUser(deleteReq *dto.UserDeleteRequest) error
 }
 
 type User struct {
@@ -37,17 +38,23 @@ func NewUserRepo(db *gorm.DB) UserRepo {
 
 // Create User
 func (r *UserRepoImpl) CreateUser(userReq *dto.UserCreateRequest) (lastInsertedID int, err error) {
-	result := r.db.Create(&userReq)
+	user := &User{
+		Username: userReq.UserName,
+		Password: userReq.Password,
+		Salt:     userReq.Salt,
+		Mail:     userReq.Mail,
+	}
+	result := r.db.Create(&user)
 
 	if result.Error != nil {
 		return 0, result.Error
 	}
 
-	return userReq.ID, nil
+	return user.ID, nil
 }
 
 // Read a single user
-func (r *UserRepoImpl) GetUser(id int) (userResp *dto.UserResponse, err error) {
+func (r *UserRepoImpl) GetUser(id int) (userResp *User, err error) {
 	result := r.db.Unscoped().First(&userResp, id)
 
 	if result.Error != nil {
@@ -67,25 +74,23 @@ func (r *UserRepoImpl) GetUser(id int) (userResp *dto.UserResponse, err error) {
 }
 
 // Read All Users
-func (r *UserRepoImpl) GetAllUsers() (userResp []*dto.UserResponse, err error) {
-	result := r.db.Unscoped().Where("is_deleted = ?", false).Find(&userResp)
+func (r *UserRepoImpl) GetAllUsers() (userResp []*User, err error) {
+	result := r.db.Table("users").Where("is_deleted = ?", false).Find(&userResp)
 
 	if result.Error != nil {
-		fmt.Println("Users fetching failed due to-", result.Error)
+		log.Print("Users fetching failed due to-", result.Error)
 		return nil, result.Error
 	}
 
-	// for _, user := range users {
-	// 	fmt.Printf("User details with userid %d are Username: %s Mail: %s Created at: %v Updated at: %v\n", user.ID, user.Username, user.Mail, user.CreatedAt, user.UpdateAt)
-	// }
 	return userResp, nil
 }
 
 // Update user
 func (r *UserRepoImpl) UpdateUser(updateReq *dto.UserUpdateRequest) error {
-	result := r.db.Where("id = ? AND is_deleted = ?", updateReq.ID, false).Updates(map[string]interface{}{
-		"name":     updateReq.UserName,
-		"password": updateReq.Password,
+	result := r.db.Table("users").Where("id = ? AND is_deleted = ?", updateReq.ID, false).Updates(map[string]interface{}{
+		"username":   updateReq.UserName,
+		"password":   updateReq.Password,
+		"updated_at": time.Now().UTC(),
 	})
 
 	if result.Error != nil {
@@ -102,10 +107,11 @@ func (r *UserRepoImpl) UpdateUser(updateReq *dto.UserUpdateRequest) error {
 }
 
 // Delete user
-func (r *UserRepoImpl) DeleteUser(id int) error {
-	result := r.db.Table("users").Where("id = ? AND status = ?", id, true).Updates(map[string]interface{}{
-		"status":     false,
+func (r *UserRepoImpl) DeleteUser(deleteReq *dto.UserDeleteRequest) error {
+	result := r.db.Table("users").Where("id = ? AND is_deleted = ?", deleteReq.ID, false).Updates(map[string]interface{}{
+		"is_deleted": true,
 		"deleted_at": time.Now().UTC(),
+		"deleted_by": deleteReq.DeletedBy,
 	})
 	if result.Error != nil {
 		fmt.Println("User deletion failed due to- ", result.Error)
@@ -121,10 +127,10 @@ func (r *UserRepoImpl) DeleteUser(id int) error {
 	// }
 
 	if result.RowsAffected == 0 {
-		fmt.Printf("No user found with id %d to delete.\n", id)
-		return fmt.Errorf("no user found with id %d to delete", id)
+		fmt.Printf("No user found with id %d to delete.\n", deleteReq.ID)
+		return fmt.Errorf("no user found with id %d to delete", deleteReq.ID)
 	}
 
-	fmt.Printf("User with id %d is deleted successfully\n", id)
+	fmt.Printf("User with id %d is deleted successfully\n", deleteReq.ID)
 	return nil
 }

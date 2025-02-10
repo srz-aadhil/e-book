@@ -44,7 +44,7 @@ func (c *bookControllerImpl) GetBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	api.Success(w, http.StatusOK, book)
+	api.Success(w, http.StatusOK,book)
 }
 
 func (c *bookControllerImpl) GetAllBooks(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +55,7 @@ func (c *bookControllerImpl) GetAllBooks(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	api.Success(w, http.StatusOK, allBooks)
+	api.Success(w, http.StatusOK,allBooks)
 }
 
 func (c *bookControllerImpl) UpdateBook(w http.ResponseWriter, r *http.Request) {

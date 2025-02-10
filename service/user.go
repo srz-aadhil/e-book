@@ -4,7 +4,11 @@ import (
 	"ebookmod/app/dto"
 	"ebookmod/pkg/e"
 	"ebookmod/repo"
+	"errors"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 type UserService interface {
@@ -35,15 +39,17 @@ func (s *userServiceImpl) CreateUser(r *http.Request) (lastInsertedID int, err e
 		return 0, e.NewError(e.ErrValidateRequest, "User creation validate error", err)
 	}
 
+	log.Info().Msg("Parsing and Validation successfully completed")
 	userID, err := s.userRepo.CreateUser(body)
 	if err != nil {
 		return 0, e.NewError(e.ErrInternalServer, "User creation failed", err)
 	}
 
+	log.Info().Msg("User creation successfully completed")
 	return userID, nil
 }
 
-func (s *userServiceImpl) GetUser(r *http.Request) (userResp *dto.UserResponse, err error) {
+func (s *userServiceImpl) GetUser(r *http.Request) (*dto.UserResponse, error) {
 	body := &dto.UserRequest{}
 	if err := body.Parse(r); err != nil {
 		return nil, e.NewError(e.ErrInvalidRequest, "User fetching parse error", err)
@@ -53,12 +59,26 @@ func (s *userServiceImpl) GetUser(r *http.Request) (userResp *dto.UserResponse, 
 		return nil, e.NewError(e.ErrValidateRequest, "User fetching validation error", err)
 	}
 
-	userResp, err = s.userRepo.GetUser(body.ID)
+	log.Info().Msg("Parsing and validaton successfully completed")
+
+	user, err := s.userRepo.GetUser(body.ID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Warn().Msg("Record not found with mentioned id")
+			return nil, e.NewError(e.ErrResourceNotFound, "No user with mentioned id", err)
+		}
 		return nil, e.NewError(e.ErrInternalServer, "User fetching failed", err)
 	}
 
-	return userResp, nil
+	//storing data from user struct to dto.UserResponse struct
+	var userResp dto.UserResponse
+	userResp.ID = user.ID
+	userResp.UserName = user.Username
+	userResp.CreatedAt = user.CreatedAt
+	userResp.UpdatedAt = user.UpdateAt
+
+	log.Info().Msg("User retrieved successfully")
+	return &userResp, nil
 }
 
 func (s *userServiceImpl) GetAllUsers(r *http.Request) (allUsers []*dto.UserResponse, err error) {
@@ -73,12 +93,15 @@ func (s *userServiceImpl) GetAllUsers(r *http.Request) (allUsers []*dto.UserResp
 		var user dto.UserResponse
 
 		user.ID = val.ID
-		user.UserName = val.UserName
+		user.UserName = val.Username
+		user.CreatedAt = val.CreatedAt
+		user.UpdatedAt = val.UpdateAt
 		user.IsDeleted = val.IsDeleted
 
 		usersList = append(usersList, &user)
 	}
 
+	log.Info().Msg("All users retrieved successfully")
 	return usersList, nil
 }
 
@@ -92,14 +115,22 @@ func (s *userServiceImpl) UpdateUser(r *http.Request) error {
 		return e.NewError(e.ErrValidateRequest, "User updation validate error", err)
 	}
 
+	log.Info().Msg("User parsing and validation successfully completed")
+
 	if err := s.userRepo.UpdateUser(body); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Warn().Msg("Record not found")
+			return e.NewError(e.ErrResourceNotFound, "No user found mentioned id ", err)
+		}
 		return e.NewError(e.ErrInternalServer, "User updation failed", err)
 	}
+
+	log.Info().Msg("User successfully updated")
 	return nil
 }
 
 func (s *userServiceImpl) DeleteUser(r *http.Request) error {
-	body := &dto.UserRequest{}
+	body := &dto.UserDeleteRequest{}
 	if err := body.Parse(r); err != nil {
 		return e.NewError(e.ErrDecodeRequestBody, "User deletion parse error", err)
 	}
@@ -108,9 +139,16 @@ func (s *userServiceImpl) DeleteUser(r *http.Request) error {
 		return e.NewError(e.ErrValidateRequest, "User deletion validate error", err)
 	}
 
-	if err := s.userRepo.DeleteUser(body.ID); err != nil {
+	log.Info().Msg("Request parsing and validation successfully completed")
+
+	if err := s.userRepo.DeleteUser(body); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Warn().Msg("Record not found")
+			return e.NewError(e.ErrResourceNotFound, "No user with mentioned id to delete", err)
+		}
 		return e.NewError(e.ErrResourceNotFound, "No user found with mentioned id", err)
 	}
 
+	log.Info().Msg("User deletion successfully completed")
 	return nil
 }

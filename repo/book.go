@@ -10,8 +10,8 @@ import (
 
 type BookRepo interface {
 	CreateBook(bookReq *dto.BookCreateRequest) (lastInsertedID int, err error)
-	GetBook(id int) (bookResp *dto.BookResponse, err error)
-	GetAllBooks() (bookResp []*dto.BookResponse, err error)
+	GetBook(id int) (bookResp *Book, err error)
+	GetAllBooks() (bookResp []*Book, err error)
 	UpdateBook(updateBook *dto.BookUpdateRequest) (err error)
 	DeleteBook(id int) error
 }
@@ -53,9 +53,9 @@ func (r *BookRepoImpl) CreateBook(bookReq *dto.BookCreateRequest) (lastInsterted
 }
 
 // Read a book
-func (r *BookRepoImpl) GetBook(id int) (bookResp *dto.BookResponse, err error) {
+func (r *BookRepoImpl) GetBook(id int) (bookResp *Book, err error) {
 	//getting a book from db
-	result := r.db.Where("id = ?", id).First(bookResp)
+	result := r.db.Where("id = ?", id).First(&bookResp)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
@@ -75,8 +75,8 @@ func (r *BookRepoImpl) GetBook(id int) (bookResp *dto.BookResponse, err error) {
 }
 
 // Read All Books
-func (r *BookRepoImpl) GetAllBooks() (bookResp []*dto.BookResponse, err error) {
-	result := r.db.Unscoped().Where("status = ? OR status = ?", 1, 2).Find(bookResp)
+func (r *BookRepoImpl) GetAllBooks() (bookResp []*Book, err error) {
+	result := r.db.Table("books").Where("status = ? OR status = ?", 1, 2).Find(&bookResp)
 
 	if result.Error != nil {
 		return nil, fmt.Errorf("Books fetching failed due to %v", result.Error)

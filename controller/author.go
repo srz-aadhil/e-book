@@ -76,5 +76,5 @@ func (c *authorControllerImpl) DeleteAuthor(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	api.Success(w, http.StatusOK, "Author Deletion failed")
+	api.Success(w, http.StatusOK, "Author Deletion successfully completed")
 }
